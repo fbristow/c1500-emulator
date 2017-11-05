@@ -56,28 +56,33 @@ enum InstructionType decode_instruction( char const * const instruction )
 {
     enum InstructionType type = UNRECOGNIZED;
 
-    if ( strcmp( instruction, "SAVE" ) == 0 ) {
-        type = SAVE;
-    } else if ( strcmp( instruction, "STORE" ) == 0 ) {
-        type = STORE;
-    } else if ( strcmp( instruction, "GETA" ) == 0 ) {
-        type = GETA;
-    } else if ( strcmp( instruction, "GETB" ) == 0 ) {
-        type = GETB;
-    } else if ( strcmp( instruction, "ADD" ) == 0 ) {
-        type = ADD;
-    } else if ( strcmp( instruction, "SUB" ) == 0 ) {
-        type = SUB;
-    } else if ( strcmp( instruction, "MULT" ) == 0 ) {
-        type = MULT;
-    } else if ( strcmp( instruction, "GETINPUT" ) == 0 ) {
-        type = GETINPUT;
-    } else if ( strcmp( instruction, "OUTPUT" ) == 0 ) {
-        type = OUTPUT;
-    } else if ( strcmp( instruction, "JUMP" ) == 0 ) {
-        type = JUMP;
-    } else if ( strcmp( instruction, "JUMPIFZERO" ) == 0 ) {
-        type = JUMPIFZERO;
+    assert( instruction != NULL );
+
+    if ( instruction != NULL )
+    {
+        if ( strcmp( instruction, "SAVE" ) == 0 ) {
+            type = SAVE;
+        } else if ( strcmp( instruction, "STORE" ) == 0 ) {
+            type = STORE;
+        } else if ( strcmp( instruction, "GETA" ) == 0 ) {
+            type = GETA;
+        } else if ( strcmp( instruction, "GETB" ) == 0 ) {
+            type = GETB;
+        } else if ( strcmp( instruction, "ADD" ) == 0 ) {
+            type = ADD;
+        } else if ( strcmp( instruction, "SUB" ) == 0 ) {
+            type = SUB;
+        } else if ( strcmp( instruction, "MULT" ) == 0 ) {
+            type = MULT;
+        } else if ( strcmp( instruction, "GETINPUT" ) == 0 ) {
+            type = GETINPUT;
+        } else if ( strcmp( instruction, "OUTPUT" ) == 0 ) {
+            type = OUTPUT;
+        } else if ( strcmp( instruction, "JUMP" ) == 0 ) {
+            type = JUMP;
+        } else if ( strcmp( instruction, "JUMPIFZERO" ) == 0 ) {
+            type = JUMPIFZERO;
+        }
     }
 
     assert( type != UNRECOGNIZED );
@@ -90,56 +95,64 @@ void load_instructions( char const * const filename )
 #define DELIMITERS ", "
     char line[ LINE_SIZE ];
     char *operand;
-    FILE *f = fopen( filename, "r" );
-    assert( f != NULL );
+    FILE *f;
 
-    if ( f )
+    assert( filename != NULL );
+    
+    if ( filename != NULL )
     {
-        unsigned int current_instruction = 0;
-        struct Instruction *instruction = &cpu.instructions[ current_instruction ];
-        
-        // load all instructions into memory
-        while( fgets( line, LINE_SIZE, f ) != NULL )
+        f = fopen( filename, "r" );
+        assert( f != NULL );
+
+        if ( f )
         {
-            // chuck the newline(s)
-            line[ strcspn( line, "\r\n" ) ] = '\0';
-
-            // get the actual op
-            strtok( line, DELIMITERS );
-            instruction->type = decode_instruction( line );
-
-            // get operand1
-            operand = strtok( NULL, DELIMITERS );
-            if ( operand != NULL ) 
+            unsigned int current_instruction = 0;
+            struct Instruction *instruction = &cpu.instructions[ current_instruction ];
+            
+            // load all instructions into memory
+            while( fgets( line, LINE_SIZE, f ) != NULL )
             {
-                instruction->operand1 = atoi( operand );
-                // get operand2
+                // chuck the newline(s)
+                line[ strcspn( line, "\r\n" ) ] = '\0';
+
+                // get the actual op
+                strtok( line, DELIMITERS );
+                instruction->type = decode_instruction( line );
+
+                // get operand1
                 operand = strtok( NULL, DELIMITERS );
                 if ( operand != NULL ) 
                 {
-                    instruction->operand2 = atoi( operand );
+                    instruction->operand1 = atoi( operand );
+                    // get operand2
+                    operand = strtok( NULL, DELIMITERS );
+                    if ( operand != NULL ) 
+                    {
+                        instruction->operand2 = atoi( operand );
+                    }
                 }
+
+
+                current_instruction++;
+                assert( current_instruction < MAX_INSTR );
+                instruction = &cpu.instructions[ current_instruction ];
             }
 
-
-            current_instruction++;
-            assert( current_instruction < MAX_INSTR );
-            instruction = &cpu.instructions[ current_instruction ];
+            fclose( f );
+            cpu.total_instructions = current_instruction;
         }
-
-        fclose( f );
-        cpu.total_instructions = current_instruction;
-    }
-    else
-    {
-        printf( "Unable to open %s [%d]\n", filename, ferror( f ) );
+        else
+        {
+            printf( "Unable to open %s [%d]\n", filename, ferror( f ) );
+        }
     }
 }
 
 void check_state()
 {
-    assert( cpu.total_instructions > 0 );
+    // make sure that we haven't gone off the deep end.
     assert( cpu.current_instruction < cpu.total_instructions );
+    assert( cpu.instructions[ cpu.current_instruction ].type != UNRECOGNIZED );
 
     // instructions are consecutive (we don't have addresses
     // in program-space that are missing instructions)
