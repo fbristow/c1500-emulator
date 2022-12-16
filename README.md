@@ -18,7 +18,7 @@ Running
 The emulator expects programs to be written in plain-text files. Pass the plain-text file as the first argument to the emulator. Input for the program is provided on `STDIN` and output is written to `STDOUT`.
 
 ```bash
-$ echo "1 2 3 4 -1" | ./c1500 < test-data/prog.txt
+$ echo "1 2 3 4 -1" | ./c1500 test-data/prog.txt
 10
 $ 
 ```
